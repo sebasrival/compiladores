@@ -4,8 +4,8 @@ compiladores
 Compiladores FPUNA
 
 Autor: Julio Paciello
-Modificaciones para la tarea
-Analizador Lexico tipo JSON
+
+Modificaciones para la tareaAnalizador Lexico tipo JSON
 - Sebastian Rivaldi
 - Martin Villasboa
 
