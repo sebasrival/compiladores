@@ -107,63 +107,18 @@ void insertTablaSimbolos(const char *s, int n)
 void initTablaSimbolos()
 {
 	int i;
-	const char *vector[]={
-		"program",
-		"type",
-		"var",
-		"array",
-		"begin",
-		"end",
-		"do",
-		"to",
-		"downto",
-		"then",
-		"of",
-		"function",
-		"procedure", 
-		"integer", 
-		"real", 
-		"boolean", 
-		"char", 
-		"for", 
-		"if", 
-		"else", 
-		"while", 
-		"repeat", 
-		"until", 
-		"case", 
-		"record", 
-		"writeln",
-		"write",
-		"const"
-	};
- 	for (i=0;i<28;i++)
-	{
-		insertTablaSimbolos(vector[i],i+256);
-	}
-	insertTablaSimbolos(",",',');
-	insertTablaSimbolos(".",'.');
-	insertTablaSimbolos(":",':');
-	insertTablaSimbolos(";",';');
-	insertTablaSimbolos("(",'(');
-	insertTablaSimbolos(")",')');
-	insertTablaSimbolos("[",'[');
-	insertTablaSimbolos("]",']');
-	insertTablaSimbolos("true",BOOL);
-	insertTablaSimbolos("false",BOOL);
-	insertTablaSimbolos("not",NOT);
-	insertTablaSimbolos("<",OPREL);
-	insertTablaSimbolos("<=",OPREL);
-	insertTablaSimbolos("<>",OPREL);
-	insertTablaSimbolos(">",OPREL);
-	insertTablaSimbolos(">=",OPREL);
-	insertTablaSimbolos("=",OPREL);
-	insertTablaSimbolos("+",OPSUMA);
-	insertTablaSimbolos("-",OPSUMA);
-	insertTablaSimbolos("or",OPSUMA);
-	insertTablaSimbolos("*",OPMULT);
-	insertTablaSimbolos("/",OPMULT);
-	insertTablaSimbolos("div",OPMULT);
-	insertTablaSimbolos("mod",OPMULT);
-	insertTablaSimbolos(":=",OPASIGNA);
+	const char *vector;
+	insertTablaSimbolos(",",COMA);
+	insertTablaSimbolos(":",DOS_PUNTOS);
+	insertTablaSimbolos("[",L_CORCHETE);
+	insertTablaSimbolos("]",R_CORCHETE);
+	insertTablaSimbolos("{",L_LLAVE);
+	insertTablaSimbolos("}",R_LLAVE);
+	insertTablaSimbolos("true", PR_TRUE	);
+	insertTablaSimbolos("false", PR_FALSE);
+	insertTablaSimbolos("null", PR_NULL);
+	//estos simbolos serviran para el archivo de salida
+	insertTablaSimbolos(" ", ' '); //espacio
+	insertTablaSimbolos("\t", '\t'); //tabulacion
+	insertTablaSimbolos("\n", '\n'); //salto de linea
 }

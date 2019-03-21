@@ -6,7 +6,11 @@
  *	Descripcion:
  *	Implementa un analizador léxico que reconoce números, identificadores, 
  * 	palabras reservadas, operadores y signos de puntuación para un lenguaje
- * 	con sintaxis tipo Pascal.
+ * 	con sintaxis tipo JSON.
+ *  
+ *  Este analizador fue modificado por:
+ *  - Sebastian Rivaldi
+ *	- Martian Villasboa
  *	
  */
 
@@ -24,21 +28,86 @@ token t;				// token global para recibir componentes del Analizador Lexico
 
 // variables para el analizador lexico
 
-FILE *archivo;			// Fuente pascal
+FILE *archivo;			// Fuente JSON
+FILE *archivo2;			//salida de los componentes lexicos
 char buff[2*TAMBUFF];	// Buffer para lectura de archivo fuente
 char id[TAMLEX];		// Utilizado por el analizador lexico
 int delantero=-1;		// Utilizado por el analizador lexico
 int fin=0;				// Utilizado por el analizador lexico
 int numLinea=1;			// Numero de Linea
 
-/**************** Funciones **********************/
+//array para poder realizar la salida de los componentes lexicos
 
+
+/**************** Funciones **********************/
 
 // Rutinas del analizador lexico
 
 void error(const char* mensaje)
 {
 	printf("Lin %d: Error Lexico. %s.\n",numLinea,mensaje);	
+}
+
+char* buscarComponenteLexico(int compLex){
+	// se crea el array con los literales de los componentes lexicos
+	char *comp[] = {
+		"L_CORCHETE ",
+		"R_CORCHETE ",
+		"L_LLAVE ",
+		"R_LLAVE ",	
+		"COMA ",
+		"DOS_PUNTOS ",
+		"STRING ",
+		"NUMBER ",
+		"PR_TRUE ",	
+		"PR_FALSE ",
+		"PR_NULL "
+	};
+	switch(compLex){
+		case L_CORCHETE:
+			return comp[0];
+			break;
+		case R_CORCHETE:
+			return comp[1];
+			break;
+		case L_LLAVE:
+			return comp[2];
+			break;
+		case R_LLAVE:
+			return comp[3];
+			break;
+		case COMA:
+			return comp[4];
+			break;
+		case DOS_PUNTOS:
+			return comp[5];
+			break;
+		case STRING:
+			return comp[6];
+			break;
+		case NUMBER:
+			return comp[7];
+			break;
+		case PR_TRUE:
+			return comp[8];
+			break;
+		case PR_FALSE:
+			return comp[9];
+			break;
+		case PR_NULL:
+			return comp[10];
+			break;
+		case ' ':
+			return " ";
+		case '\t':
+			return "\t";
+		case '\n':
+			return "\n";
+		case -1:
+			return "\0";
+		default:
+			error("No se encuentra este componente lexico");
+	}
 }
 
 void sigLex()
@@ -53,13 +122,24 @@ void sigLex()
 	while((c=fgetc(archivo))!=EOF)
 	{
 		
-		if (c==' ' || c=='\t')
-			continue;	//eliminar espacios en blanco
+		if (c==' '){
+			t.compLex=' ';
+			t.pe=buscar(" ");
+			break;
+		}
+		else if(c=='\t'){
+			t.compLex='\t';
+			t.pe=buscar("\t");
+			break;
+		}
 		else if(c=='\n')
 		{
 			//incrementar el numero de linea
 			numLinea++;
-			continue;
+			//para fomartear el archivo de salida
+			t.compLex='\n';
+			t.pe=buscar("\n");
+			break;
 		}
 		else if (isalpha(c))
 		{
@@ -70,7 +150,7 @@ void sigLex()
 				i++;
 				c=fgetc(archivo);
 				if (i>=TAMLEX)
-					error("Longitud de Identificador excede tamaño de buffer");
+					error("Longitud de la palabra reservada excede tamaño de buffer");
 			}while(isalpha(c) || isdigit(c));
 			id[i]='\0';
 			if (c!=EOF)
@@ -81,11 +161,8 @@ void sigLex()
 			t.compLex=t.pe->compLex;
 			if (t.pe->compLex==-1)
 			{
-				strcpy(e.lexema,id);
-				e.compLex=ID;
-				insertar(e);
-				t.pe=buscar(id);
-				t.compLex=ID;
+				char cad [300] = "Esta palabra reservada no pertece al lenguaje: ";
+				error(strcat(cad, id));
 			}
 			break;
 		}
@@ -203,11 +280,11 @@ void sigLex()
 						if (t.pe->compLex==-1)
 						{
 							strcpy(e.lexema,id);
-							e.compLex=NUM;
+							e.compLex=NUMBER;
 							insertar(e);
 							t.pe=buscar(id);
 						}
-						t.compLex=NUM;
+						t.compLex=NUMBER;
 						break;
 					case -1:
 						if (c==EOF)
@@ -219,164 +296,41 @@ void sigLex()
 				}
 			break;
 		}
-		else if (c=='<') 
-		{
-			//es un operador relacional, averiguar cual
-			c=fgetc(archivo);
-			if (c=='>'){
-				t.compLex=OPREL;
-				t.pe=buscar("<>");
-			}
-			else if (c=='='){
-				t.compLex=OPREL;
-				t.pe=buscar("<=");
-			}
-			else{
-				ungetc(c,archivo);
-				t.compLex=OPREL;
-				t.pe=buscar("<");
-			}
-			break;
-		}
-		else if (c=='>')
-		{
-			//es un operador relacional, averiguar cual
-				c=fgetc(archivo);
-			if (c=='='){
-				t.compLex=OPREL;
-				t.pe=buscar(">=");
-			}
-			else{
-				ungetc(c,archivo);
-				t.compLex=OPREL;
-				t.pe=buscar(">");
-			}
-			break;
-		}
 		else if (c==':')
 		{
-			//puede ser un : o un operador de asignacion
-			c=fgetc(archivo);
-			if (c=='='){
-				t.compLex=OPASIGNA;
-				t.pe=buscar(":=");
-			}
-			else{
-				ungetc(c,archivo);
-				t.compLex=':';
-				t.pe=buscar(":");
-			}
-			break;
-		}
-		else if (c=='+')
-		{
-			t.compLex=OPSUMA;
-			t.pe=buscar("+");
-			break;
-		}
-		else if (c=='-')
-		{
-			t.compLex=OPSUMA;
-			t.pe=buscar("-");
-			break;
-		}
-		else if (c=='*')
-		{
-			t.compLex=OPMULT;
-			t.pe=buscar("*");
-			break;
-		}
-		else if (c=='/')
-		{
-			t.compLex=OPMULT;
-			t.pe=buscar("/");
-			break;
-		}
-		else if (c=='=')
-		{
-			t.compLex=OPREL;
-			t.pe=buscar("=");
+			t.compLex=DOS_PUNTOS;
+			t.pe=buscar(":");
 			break;
 		}
 		else if (c==',')
 		{
-			t.compLex=',';
+			t.compLex=COMA;
 			t.pe=buscar(",");
-			break;
-		}
-		else if (c==';')
-		{
-			t.compLex=';';
-			t.pe=buscar(";");
-			break;
-		}
-		else if (c=='.')
-		{
-			t.compLex='.';
-			t.pe=buscar(".");
-			break;
-		}
-		else if (c=='(')
-		{
-			if ((c=fgetc(archivo))=='*')
-			{//es un comentario
-				while(c!=EOF)
-				{
-					c=fgetc(archivo);
-					if (c=='*')
-					{
-						if ((c=fgetc(archivo))==')')
-						{
-							break;
-						}
-					}
-					else if(c=='\n')
-					{
-						//incrementar el numero de linea
-						numLinea++;
-					}
-				}
-				if (c==EOF)
-					error("Se llego al fin de archivo sin finalizar un comentario");
-				continue;
-			}
-			else
-			{
-				ungetc(c,archivo);
-				t.compLex='(';
-				t.pe=buscar("(");
-			}
-			break;
-		}
-		else if (c==')')
-		{
-			t.compLex=')';
-			t.pe=buscar(")");
 			break;
 		}
 		else if (c=='[')
 		{
-			t.compLex='[';
+			t.compLex=L_CORCHETE;
 			t.pe=buscar("[");
 			break;
 		}
 		else if (c==']')
 		{
-			t.compLex=']';
+			t.compLex=R_CORCHETE;
 			t.pe=buscar("]");
 			break;
 		}
-		else if (c=='\'')
+		else if (c=='\"')
 		{//un caracter o una cadena de caracteres
 			i=0;
 			id[i]=c;
 			i++;
 			do{
 				c=fgetc(archivo);
-				if (c=='\'')
+				if (c=='\"')
 				{
 					c=fgetc(archivo);
-					if (c=='\'')
+					if (c=='\"')
 					{
 						id[i]=c;
 						i++;
@@ -385,7 +339,7 @@ void sigLex()
 					}
 					else
 					{
-						id[i]='\'';
+						id[i]='\"';
 						i++;
 						break;
 					}
@@ -409,10 +363,7 @@ void sigLex()
 			if (t.pe->compLex==-1)
 			{
 				strcpy(e.lexema,id);
-				if (strlen(id)==3 || strcmp(id,"''''")==0)
-					e.compLex=CAR;
-				else
-					e.compLex=LITERAL;
+				e.compLex=STRING;
 				insertar(e);
 				t.pe=buscar(id);
 				t.compLex=e.compLex;
@@ -421,20 +372,15 @@ void sigLex()
 		}
 		else if (c=='{')
 		{
-			//elimina el comentario
-			while(c!=EOF)
-			{
-				c=fgetc(archivo);
-				if (c=='}')
-					break;
-				else if(c=='\n')
-				{
-					//incrementar el numero de linea
-					numLinea++;
-				}
-			}
-			if (c==EOF)
-				error("Se llego al fin de archivo sin finalizar un comentario");
+			t.compLex=L_LLAVE;
+			t.pe=buscar("{");
+			break;
+		}
+		else if (c=='}')
+		{
+			t.compLex=R_LLAVE;
+			t.pe=buscar("}");
+			break;
 		}
 		else if (c!=EOF)
 		{
@@ -449,8 +395,8 @@ void sigLex()
 		sprintf(e.lexema,"EOF");
 		t.pe=&e;
 	}
-	
 }
+
 
 int main(int argc,char* args[])
 {
@@ -466,11 +412,17 @@ int main(int argc,char* args[])
 			printf("Archivo no encontrado.\n");
 			exit(1);
 		}
+		if (!(archivo2 = fopen("salida.txt", "w"))) {
+			printf("No se genera el archivo de salida.\n");
+			exit(1);
+		}
 		while (t.compLex!=EOF){
 			sigLex();
-			printf("Lin %d: %s -> %d\n",numLinea,t.pe->lexema,t.compLex);
+			fprintf(archivo2, "%s",buscarComponenteLexico(t.compLex));
+			//printf("Lin %d: %s -> %d\n",numLinea,t.pe->lexema,t.compLex);
 		}
 		fclose(archivo);
+		fclose(archivo2);
 	}else{
 		printf("Debe pasar como parametro el path al archivo fuente.\n");
 		exit(1);
